@@ -92,7 +92,7 @@ public class paytube implements EntryPoint {
 	}
 
 	private void initializeAddTransactionGrid() {
-		grid.resize(5, 2);
+		grid.resize(7, 2);
 		grid.setWidget(0, 0, new Label(messages.place()));
 		TextBox amountText = createNewTextField();
 		TextBox placeText = createNewTextField();
@@ -104,23 +104,30 @@ public class paytube implements EntryPoint {
 		grid.setWidget(2, 0, new Label(messages.amount()));
 		grid.setWidget(2, 1, amountText);
 		grid.setWidget(3, 0, new Label(messages.payees()));
-		SuggestBox payeeText = createNameSuggestionBox(createNewTextField());
+		final SuggestBox payeeText = createNameSuggestionBox(createNewTextField());
 		final FlexTable payeeTable = new FlexTable();
 		payeeText.addSelectionHandler(new SelectionHandler<Suggestion>() {
 			ArrayList<String> payeeList = new ArrayList<String>();
+
 			public void onSelection(SelectionEvent<Suggestion> event) {
-				//add to flexi table containing list of names.
-				String selectedName = event.getSelectedItem().getReplacementString();
-				payeeTable.setWidget(payeeList.size(), 0, new Label(selectedName));
-				TextBox splitAmount = new TextBox();
-				splitAmount.setVisibleLength(20);
-				payeeTable.setWidget(payeeList.size(), 1, splitAmount);
-				payeeList.add(selectedName);
+				// add to flexi table containing list of names.
+				String selectedName = event.getSelectedItem()
+						.getReplacementString();
+				if (!payeeList.contains(selectedName)) {
+					payeeTable.setWidget(payeeList.size(), 0, new Label(
+							selectedName));
+					TextBox splitAmount = new TextBox();
+					splitAmount.setVisibleLength(20);
+					payeeTable.setWidget(payeeList.size(), 1, splitAmount);
+					payeeList.add(selectedName);
+				}
+				payeeText.setText("");
 			}
 		});
 		grid.setWidget(3, 1, payeeText);
 		grid.setWidget(4, 1, payeeTable);
-		
+		grid.setWidget(5, 1, new Button(messages.split()));
+		grid.setWidget(6, 1, new Button(messages.submitTransaction()));
 		grid.setVisible(true);
 	}
 
@@ -128,8 +135,8 @@ public class paytube implements EntryPoint {
 		MultiWordSuggestOracle suggestionList = new MultiWordSuggestOracle();
 		ArrayList nameList = getNameList();
 		suggestionList.addAll(nameList);
-		SuggestBox payerNameSuggestBox = new SuggestBox(
-				suggestionList, payerText);
+		SuggestBox payerNameSuggestBox = new SuggestBox(suggestionList,
+				payerText);
 		return payerNameSuggestBox;
 	}
 
