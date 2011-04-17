@@ -17,6 +17,7 @@ import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.Grid;
@@ -32,6 +33,7 @@ import com.google.gwt.user.client.ui.TabListener;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.TextBoxBase;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.client.ui.SuggestOracle.Callback;
 import com.google.gwt.user.client.ui.SuggestOracle.Request;
 import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
@@ -94,7 +96,7 @@ public class paytube implements EntryPoint {
 	private void initializeAddTransactionGrid() {
 		grid.resize(7, 2);
 		grid.setWidget(0, 0, new Label(messages.place()));
-		TextBox amountText = createNewTextField();
+		final TextBox amountText = createNewTextField();
 		TextBox placeText = createNewTextField();
 		grid.setWidget(0, 1, placeText);
 		grid.setWidget(1, 0, new Label(messages.payer()));
@@ -106,8 +108,8 @@ public class paytube implements EntryPoint {
 		grid.setWidget(3, 0, new Label(messages.payees()));
 		final SuggestBox payeeText = createNameSuggestionBox(createNewTextField());
 		final FlexTable payeeTable = new FlexTable();
+		final ArrayList<String> payeeList = new ArrayList<String>();
 		payeeText.addSelectionHandler(new SelectionHandler<Suggestion>() {
-			ArrayList<String> payeeList = new ArrayList<String>();
 
 			public void onSelection(SelectionEvent<Suggestion> event) {
 				// add to flexi table containing list of names.
@@ -126,7 +128,20 @@ public class paytube implements EntryPoint {
 		});
 		grid.setWidget(3, 1, payeeText);
 		grid.setWidget(4, 1, payeeTable);
-		grid.setWidget(5, 1, new Button(messages.split()));
+		Button splitEvenlyButton = new Button(messages.split());
+		grid.setWidget(5, 1, splitEvenlyButton);
+		splitEvenlyButton.addClickListener(new ClickListener() {
+			public void onClick(Widget sender) {
+				String amount = amountText.getText();
+				double amountDouble = Double.parseDouble(amount);
+				double payBreakup = amountDouble / payeeList.size();
+				for (int i = 0; i < payeeList.size(); i++) {
+					TextBox splitAmountText = (TextBox) payeeTable.getWidget(i,
+							1);
+					splitAmountText.setText("" + payBreakup);
+				}
+			}
+		});
 		grid.setWidget(6, 1, new Button(messages.submitTransaction()));
 		grid.setVisible(true);
 	}
