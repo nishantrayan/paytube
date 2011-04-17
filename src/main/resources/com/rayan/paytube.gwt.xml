@@ -7,12 +7,14 @@
   <!-- the theme of your GWT application by uncommenting          -->
   <!-- any one of the following lines.                            -->
   <inherits name='com.google.gwt.user.theme.standard.Standard'/>
+  <inherits name="eu.maydu.gwt.validation.ValidationLibrary"/>
   <!-- <inherits name='com.google.gwt.user.theme.chrome.Chrome'/> -->
   <!-- <inherits name='com.google.gwt.user.theme.dark.Dark'/>     -->
 
   <!-- Other module inherits                                      -->
 
   <!-- Specify the app entry point class.                         -->
+  <stylesheet src="paytube.css"/>
   <entry-point class='com.rayan.client.paytube'/>
 
   <!-- Specify the paths for translatable code                    -->
