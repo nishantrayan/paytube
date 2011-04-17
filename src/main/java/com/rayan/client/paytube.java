@@ -1,5 +1,7 @@
 package com.rayan.client;
 
+import java.util.ArrayList;
+
 import com.rayan.shared.FieldVerifier;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
@@ -11,139 +13,89 @@ import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DialogBox;
+import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.MultiWordSuggestOracle;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.SourcesTabEvents;
+import com.google.gwt.user.client.ui.SuggestBox;
+import com.google.gwt.user.client.ui.SuggestOracle;
+import com.google.gwt.user.client.ui.TabBar;
+import com.google.gwt.user.client.ui.TabListener;
 import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.TextBoxBase;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.SuggestOracle.Callback;
+import com.google.gwt.user.client.ui.SuggestOracle.Request;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
  */
 public class paytube implements EntryPoint {
-  /**
-   * The message displayed to the user when the server cannot be reached or
-   * returns an error.
-   */
-  private static final String SERVER_ERROR = "An error occurred while "
-      + "attempting to contact the server. Please check your network "
-      + "connection and try again.";
+	private final Messages messages = (Messages) GWT.create(Messages.class);
+	protected static final String ADD_TRANSACTION = "Add transaction";
+	private final Grid grid = new Grid();
 
-  /**
-   * Create a remote service proxy to talk to the server-side Greeting service.
-   */
-  private final GreetingServiceAsync greetingService = GWT.create(GreetingService.class);
+	public void onModuleLoad() {
+		TabBar tabs = createTabPanel();
+		initializeGrid();
+		VerticalPanel paytube = new VerticalPanel();
+		paytube.add(tabs);
+		paytube.add(grid);
+		RootPanel.get().add(paytube);
+	}
 
-  private final Messages messages = GWT.create(Messages.class);
+	private void initializeGrid() {
+		grid.setVisible(false);
+	}
 
-  /**
-   * This is the entry point method.
-   */
-  public void onModuleLoad() {
-    final Button sendButton = new Button( messages.sendButton() );
-    final TextBox nameField = new TextBox();
-    nameField.setText( messages.nameField() );
-    final Label errorLabel = new Label();
+	private TabBar createTabPanel() {
+		final TabBar tabs = new TabBar();
+		tabs.addTab(ADD_TRANSACTION);
+		tabs.addTab("Add person");
+		tabs.addTabListener(new TabListener() {
 
-    // We can add style names to widgets
-    sendButton.addStyleName("sendButton");
+			public void onTabSelected(SourcesTabEvents sender, int tabIndex) {
+				if (ADD_TRANSACTION.equals(tabs.getTabHTML(tabIndex))) {
+					// populate with add transction grid.
+					grid.resize(4, 2);
+					grid.setWidget(0, 0, new Label(messages.place()));
+					TextBox amountText = createNewTextField();
+					TextBox placeText = createNewTextField();
+					grid.setWidget(0, 1, placeText);
+					grid.setWidget(1, 0, new Label(messages.payer()));
+					TextBox payerText = createNewTextField();
+					MultiWordSuggestOracle suggestionList = new MultiWordSuggestOracle();
+					ArrayList nameList = getNameList();
+					suggestionList.addAll(nameList);
+					SuggestBox payerNameSuggestBox = new SuggestBox(
+							suggestionList, payerText);
+					grid.setWidget(1, 1, payerNameSuggestBox);
+					grid.setWidget(2, 0, new Label(messages.amount()));
+					grid.setWidget(2, 1, amountText);
+					grid.setVisible(true);
+				}
+			}
 
-    // Add the nameField and sendButton to the RootPanel
-    // Use RootPanel.get() to get the entire body element
-    RootPanel.get("nameFieldContainer").add(nameField);
-    RootPanel.get("sendButtonContainer").add(sendButton);
-    RootPanel.get("errorLabelContainer").add(errorLabel);
+			public boolean onBeforeTabSelected(SourcesTabEvents sender,
+					int tabIndex) {
+				return true;
+			}
+		});
+		return tabs;
+	}
 
-    // Focus the cursor on the name field when the app loads
-    nameField.setFocus(true);
-    nameField.selectAll();
+	private ArrayList getNameList() {
+		ArrayList nameList = new ArrayList();
+		nameList.add("Nishant Rayan");
+		return nameList;
+	}
 
-    // Create the popup dialog box
-    final DialogBox dialogBox = new DialogBox();
-    dialogBox.setText("Remote Procedure Call");
-    dialogBox.setAnimationEnabled(true);
-    final Button closeButton = new Button("Close");
-    // We can set the id of a widget by accessing its Element
-    closeButton.getElement().setId("closeButton");
-    final Label textToServerLabel = new Label();
-    final HTML serverResponseLabel = new HTML();
-    VerticalPanel dialogVPanel = new VerticalPanel();
-    dialogVPanel.addStyleName("dialogVPanel");
-    dialogVPanel.add(new HTML("<b>Sending name to the server:</b>"));
-    dialogVPanel.add(textToServerLabel);
-    dialogVPanel.add(new HTML("<br><b>Server replies:</b>"));
-    dialogVPanel.add(serverResponseLabel);
-    dialogVPanel.setHorizontalAlignment(VerticalPanel.ALIGN_RIGHT);
-    dialogVPanel.add(closeButton);
-    dialogBox.setWidget(dialogVPanel);
+	private TextBox createNewTextField() {
+		TextBox placeText = new TextBox();
+		placeText.setVisibleLength(50);
+		return placeText;
+	}
 
-    // Add a handler to close the DialogBox
-    closeButton.addClickHandler(new ClickHandler() {
-      public void onClick(ClickEvent event) {
-        dialogBox.hide();
-        sendButton.setEnabled(true);
-        sendButton.setFocus(true);
-      }
-    });
-
-    // Create a handler for the sendButton and nameField
-    class MyHandler implements ClickHandler, KeyUpHandler {
-      /**
-       * Fired when the user clicks on the sendButton.
-       */
-      public void onClick(ClickEvent event) {
-        sendNameToServer();
-      }
-
-      /**
-       * Fired when the user types in the nameField.
-       */
-      public void onKeyUp(KeyUpEvent event) {
-        if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
-          sendNameToServer();
-        }
-      }
-
-      /**
-       * Send the name from the nameField to the server and wait for a response.
-       */
-      private void sendNameToServer() {
-        // First, we validate the input.
-        errorLabel.setText("");
-        String textToServer = nameField.getText();
-        if (!FieldVerifier.isValidName(textToServer)) {
-          errorLabel.setText("Please enter at least four characters");
-          return;
-        }
-
-        // Then, we send the input to the server.
-        sendButton.setEnabled(false);
-        textToServerLabel.setText(textToServer);
-        serverResponseLabel.setText("");
-        greetingService.greetServer(textToServer, new AsyncCallback<String>() {
-          public void onFailure(Throwable caught) {
-            // Show the RPC error message to the user
-            dialogBox.setText("Remote Procedure Call - Failure");
-            serverResponseLabel.addStyleName("serverResponseLabelError");
-            serverResponseLabel.setHTML(SERVER_ERROR);
-            dialogBox.center();
-            closeButton.setFocus(true);
-          }
-
-          public void onSuccess(String result) {
-            dialogBox.setText("Remote Procedure Call");
-            serverResponseLabel.removeStyleName("serverResponseLabelError");
-            serverResponseLabel.setHTML(result);
-            dialogBox.center();
-            closeButton.setFocus(true);
-          }
-        });
-      }
-    }
-
-    // Add a handler to send the name to the server
-    MyHandler handler = new MyHandler();
-    sendButton.addClickHandler(handler);
-    nameField.addKeyUpHandler(handler);
-  }
 }
