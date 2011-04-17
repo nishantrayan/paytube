@@ -8,11 +8,17 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyPressEvent;
+import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.SelectionHandler;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DialogBox;
+import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
@@ -28,6 +34,7 @@ import com.google.gwt.user.client.ui.TextBoxBase;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.SuggestOracle.Callback;
 import com.google.gwt.user.client.ui.SuggestOracle.Request;
+import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
@@ -59,22 +66,7 @@ public class paytube implements EntryPoint {
 			public void onTabSelected(SourcesTabEvents sender, int tabIndex) {
 				if (ADD_TRANSACTION.equals(tabs.getTabHTML(tabIndex))) {
 					// populate with add transction grid.
-					grid.resize(4, 2);
-					grid.setWidget(0, 0, new Label(messages.place()));
-					TextBox amountText = createNewTextField();
-					TextBox placeText = createNewTextField();
-					grid.setWidget(0, 1, placeText);
-					grid.setWidget(1, 0, new Label(messages.payer()));
-					TextBox payerText = createNewTextField();
-					MultiWordSuggestOracle suggestionList = new MultiWordSuggestOracle();
-					ArrayList nameList = getNameList();
-					suggestionList.addAll(nameList);
-					SuggestBox payerNameSuggestBox = new SuggestBox(
-							suggestionList, payerText);
-					grid.setWidget(1, 1, payerNameSuggestBox);
-					grid.setWidget(2, 0, new Label(messages.amount()));
-					grid.setWidget(2, 1, amountText);
-					grid.setVisible(true);
+					initializeAddTransactionGrid();
 				}
 			}
 
@@ -89,6 +81,7 @@ public class paytube implements EntryPoint {
 	private ArrayList getNameList() {
 		ArrayList nameList = new ArrayList();
 		nameList.add("Nishant Rayan");
+		nameList.add("Maitreyee korgaonkar");
 		return nameList;
 	}
 
@@ -96,6 +89,48 @@ public class paytube implements EntryPoint {
 		TextBox placeText = new TextBox();
 		placeText.setVisibleLength(50);
 		return placeText;
+	}
+
+	private void initializeAddTransactionGrid() {
+		grid.resize(5, 2);
+		grid.setWidget(0, 0, new Label(messages.place()));
+		TextBox amountText = createNewTextField();
+		TextBox placeText = createNewTextField();
+		grid.setWidget(0, 1, placeText);
+		grid.setWidget(1, 0, new Label(messages.payer()));
+		TextBox payerText = createNewTextField();
+		SuggestBox payerNameSuggestBox = createNameSuggestionBox(payerText);
+		grid.setWidget(1, 1, payerNameSuggestBox);
+		grid.setWidget(2, 0, new Label(messages.amount()));
+		grid.setWidget(2, 1, amountText);
+		grid.setWidget(3, 0, new Label(messages.payees()));
+		SuggestBox payeeText = createNameSuggestionBox(createNewTextField());
+		final FlexTable payeeTable = new FlexTable();
+		payeeText.addSelectionHandler(new SelectionHandler<Suggestion>() {
+			ArrayList<String> payeeList = new ArrayList<String>();
+			public void onSelection(SelectionEvent<Suggestion> event) {
+				//add to flexi table containing list of names.
+				String selectedName = event.getSelectedItem().getReplacementString();
+				payeeTable.setWidget(payeeList.size(), 0, new Label(selectedName));
+				TextBox splitAmount = new TextBox();
+				splitAmount.setVisibleLength(20);
+				payeeTable.setWidget(payeeList.size(), 1, splitAmount);
+				payeeList.add(selectedName);
+			}
+		});
+		grid.setWidget(3, 1, payeeText);
+		grid.setWidget(4, 1, payeeTable);
+		
+		grid.setVisible(true);
+	}
+
+	private SuggestBox createNameSuggestionBox(TextBox payerText) {
+		MultiWordSuggestOracle suggestionList = new MultiWordSuggestOracle();
+		ArrayList nameList = getNameList();
+		suggestionList.addAll(nameList);
+		SuggestBox payerNameSuggestBox = new SuggestBox(
+				suggestionList, payerText);
+		return payerNameSuggestBox;
 	}
 
 }
