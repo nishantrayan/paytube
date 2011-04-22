@@ -16,10 +16,39 @@
 		<!-- GWT needs at least java 1.5 -->
 		<maven.compiler.source>1.5</maven.compiler.source>
 		<maven.compiler.target>1.5</maven.compiler.target>
-		<webappDirectory>${project.build.directory}/${project.build.finalName}</webappDirectory>
+		<webappDirectory>${project.build.directory}/${project.build.finalName}
+		</webappDirectory>
 	</properties>
 
 	<dependencies>
+		<dependency>
+			<groupId>net.sf.gwt-widget</groupId>
+			<artifactId>gwt-sl</artifactId>
+			<version>0.1.5</version>
+		</dependency>
+
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>servlet-api</artifactId>
+			<version>2.5</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring</artifactId>
+			<version>2.0.7</version>
+			<exclusions>
+				<exclusion>
+					<groupId>javax.servlet</groupId>
+					<artifactId>servlet-api</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.gwtrpcspring</groupId>
+			<artifactId>gwtrpcspring </artifactId>
+			<version>1.01</version>
+		</dependency>
 		<dependency>
 			<groupId>com.google.gwt</groupId>
 			<artifactId>gwt-servlet</artifactId>
@@ -73,7 +102,8 @@
 					<runTarget>paytube.html</runTarget>
 					<hostedWebapp>${webappDirectory}</hostedWebapp>
 					<i18nConstantsBundles>
-						<i18nConstantsBundle>com.rayan.client.Messages</i18nConstantsBundle>
+						<i18nConstantsBundle>com.rayan.client.Messages
+						</i18nConstantsBundle>
 					</i18nConstantsBundles>
 				</configuration>
 			</plugin>

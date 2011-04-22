@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.avalon.framework.activity.Suspendable;
+
 import com.rayan.shared.FieldVerifier;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
@@ -66,8 +68,12 @@ public class paytube implements EntryPoint {
 	private static final String AMOUNT_VALIDATION = "amountValidation";
 	protected static final String SPLIT_AMOUNT_VALIDATION = "splitAmountValidation";
 	private final Grid grid = new Grid();
+	private PaytubeTransactionServiceAsync paytubeService;
 
 	public void onModuleLoad() {
+
+		paytubeService = (PaytubeTransactionServiceAsync) GWT
+				.create(PaytubeTransactionService.class);
 		TabBar tabs = createTabPanel();
 		initializeGrid();
 		VerticalPanel paytube = new VerticalPanel();
@@ -99,13 +105,6 @@ public class paytube implements EntryPoint {
 			}
 		});
 		return tabs;
-	}
-
-	private ArrayList<String> getNameList() {
-		ArrayList nameList = new ArrayList();
-		nameList.add("Nishant Rayan");
-		nameList.add("Maitreyee korgaonkar");
-		return nameList;
 	}
 
 	private TextBox createNewTextField() {
@@ -143,11 +142,21 @@ public class paytube implements EntryPoint {
 		grid.setWidget(0, 2, placeTextError);
 		grid.setWidget(1, 0, new Label(messages.payer()));
 		TextBox payerText = createNewTextField();
-		ListBox payerNameListBox = new ListBox();
+		final ListBox payerNameListBox = new ListBox();
 		payerNameListBox.addItem("");
-		for (String payerName : getNameList()) {
-			payerNameListBox.addItem(payerName);
-		}
+
+		paytubeService.getPersons(new AsyncCallback<String[]>() {
+
+			public void onFailure(Throwable caught) {
+				Window.alert("Could not fetch names");
+
+			}
+			public void onSuccess(String[] names) {
+				for (String name : names) {
+					payerNameListBox.addItem(name);
+				}
+			}
+		});
 		Label payerTextError = new Label();
 		grid.setWidget(1, 1, payerNameListBox);
 		grid.setWidget(1, 2, payerTextError);
@@ -234,11 +243,18 @@ public class paytube implements EntryPoint {
 	}
 
 	private SuggestBox createNameSuggestionBox(TextBox payerText) {
-		MultiWordSuggestOracle suggestionList = new MultiWordSuggestOracle();
-		ArrayList nameList = getNameList();
-		suggestionList.addAll(nameList);
-		SuggestBox payerNameSuggestBox = new SuggestBox(suggestionList,
-				payerText);
+		final MultiWordSuggestOracle suggestionList = new MultiWordSuggestOracle();
+		paytubeService.getPersons(new AsyncCallback<String[]>() {
+			public void onFailure(Throwable caught) {
+				Window.alert("Could not load names for split up table");
+			}
+			public void onSuccess(String[] names) {
+				for(String name:names){
+					suggestionList.add(name);
+				}
+			}
+		});
+		SuggestBox payerNameSuggestBox = new SuggestBox(suggestionList,payerText);
 		return payerNameSuggestBox;
 	}
 
