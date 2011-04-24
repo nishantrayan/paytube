@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+         http://www.springframework.org/schema/beans/spring-beans.xsd">
+	<import resource="hibernate.xml" />
+	<bean id="paytubePaymentEventDAO" class="com.rayan.server.dao.impl.PaytubePaymentEventDAOImpl">
+		<property name="sessionFactory" ref="sessionFactory"></property>
+	</bean>
+	<bean id="paytubeTransactionDAO" class="com.rayan.server.dao.impl.PaytubeTransactionDAOImpl">
+		<property name="sessionFactory" ref="sessionFactory"></property>
+	</bean>
+	<bean id="paytubeTransactionManager"
+		class="com.rayan.server.manager.impl.PaytubeTransactionManagerImpl">
+		<property name="paytubeTransactionDAO" ref="paytubeTransactionDAO"></property>
+	</bean>
+	<bean id="paytubeTransactionService" class="com.rayan.server.PaytubeTransactionServiceImpl">
+		<property name="paytubeTransactionManager" ref="paytubeTransactionManager"></property>
+	</bean>
+</beans>

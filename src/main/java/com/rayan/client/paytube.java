@@ -5,55 +5,36 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.avalon.framework.activity.Suspendable;
-
-import com.rayan.shared.FieldVerifier;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyPressEvent;
-import com.google.gwt.event.dom.client.KeyPressHandler;
-import com.google.gwt.event.dom.client.KeyUpEvent;
-import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.ClickListener;
-import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.Grid;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.MultiWordSuggestOracle;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.SourcesTabEvents;
 import com.google.gwt.user.client.ui.SuggestBox;
-import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.TabBar;
 import com.google.gwt.user.client.ui.TabListener;
 import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.TextBoxBase;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.user.client.ui.SuggestOracle.Callback;
-import com.google.gwt.user.client.ui.SuggestOracle.Request;
 import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
+import com.rayan.shared.request.AddTransactionRequest;
 
 import eu.maydu.gwt.validation.client.DefaultValidationProcessor;
-import eu.maydu.gwt.validation.client.ValidationAction;
-import eu.maydu.gwt.validation.client.ValidationException;
 import eu.maydu.gwt.validation.client.ValidationProcessor;
 import eu.maydu.gwt.validation.client.Validator;
 import eu.maydu.gwt.validation.client.actions.LabelTextAction;
 import eu.maydu.gwt.validation.client.validators.ListBoxValidator;
 import eu.maydu.gwt.validation.client.validators.numeric.DoubleValidator;
-import eu.maydu.gwt.validation.client.validators.numeric.IntegerValidator;
 import eu.maydu.gwt.validation.client.validators.standard.NotEmptyValidator;
 
 /**
@@ -136,7 +117,7 @@ public class paytube implements EntryPoint {
 		grid.setWidget(0, 0, new Label(messages.place()));
 		final TextBox amountText = createNewTextField();
 		Label amountTextError = new Label();
-		TextBox placeText = createNewTextField();
+		final TextBox placeText = createNewTextField();
 		grid.setWidget(0, 1, placeText);
 		Label placeTextError = new Label();
 		grid.setWidget(0, 2, placeTextError);
@@ -151,6 +132,7 @@ public class paytube implements EntryPoint {
 				Window.alert("Could not fetch names");
 
 			}
+
 			public void onSuccess(String[] names) {
 				for (String name : names) {
 					payerNameListBox.addItem(name);
@@ -219,6 +201,42 @@ public class paytube implements EntryPoint {
 			public void onClick(Widget sender) {
 				boolean success = validationProcessor.validate();
 				Window.alert("Success:" + success);
+				if (success) {
+					// add transaction here;
+					String eventPlace = placeText.getText();
+					String payer = payerNameListBox
+							.getItemText(payerNameListBox.getSelectedIndex());
+					Double totalAmount = Double.parseDouble(amountText
+							.getText());
+					Map<String, Double> payeeBreakup = new HashMap<String, Double>();
+					for (int i = 0; i < payeeList.size(); i++) {
+						TextBox splitAmountText = (TextBox) payeeTable
+								.getWidget(i, 1);
+						payeeBreakup.put(payeeList.get(i), Double
+								.parseDouble(splitAmountText.getText()));
+					}
+					AddTransactionRequest addTransactionRequest = new AddTransactionRequest();
+					addTransactionRequest.setEventPlace(eventPlace);
+					addTransactionRequest.setPayer(payer);
+					addTransactionRequest.setPayeeBreakup(payeeBreakup);
+					addTransactionRequest.setTotalAmount(totalAmount);
+					// eventPlace, payer, payeeBreakup, totalAmount);
+					addTransaction(addTransactionRequest,
+							new AsyncCallback<Boolean>() {
+								public void onFailure(Throwable caught) {
+									Window.alert("Transaction failed");
+								}
+
+								public void onSuccess(Boolean result) {
+									if (result) {
+										Window.alert("Transaction added");
+									} else {
+										Window
+												.alert("Transaction failed in backend");
+									}
+								}
+							});
+				}
 			}
 		});
 		grid.setWidget(6, 1, submitButton);
@@ -242,19 +260,26 @@ public class paytube implements EntryPoint {
 		grid.setVisible(true);
 	}
 
+	protected void addTransaction(AddTransactionRequest request,
+			AsyncCallback<Boolean> callBack) {
+		this.paytubeService.addTransaction(request, callBack);
+	}
+
 	private SuggestBox createNameSuggestionBox(TextBox payerText) {
 		final MultiWordSuggestOracle suggestionList = new MultiWordSuggestOracle();
 		paytubeService.getPersons(new AsyncCallback<String[]>() {
 			public void onFailure(Throwable caught) {
 				Window.alert("Could not load names for split up table");
 			}
+
 			public void onSuccess(String[] names) {
-				for(String name:names){
+				for (String name : names) {
 					suggestionList.add(name);
 				}
 			}
 		});
-		SuggestBox payerNameSuggestBox = new SuggestBox(suggestionList,payerText);
+		SuggestBox payerNameSuggestBox = new SuggestBox(suggestionList,
+				payerText);
 		return payerNameSuggestBox;
 	}
 

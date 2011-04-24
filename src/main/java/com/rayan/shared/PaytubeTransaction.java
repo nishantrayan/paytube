@@ -2,34 +2,34 @@ package com.rayan.shared;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
 
-
 public class PaytubeTransaction implements IsSerializable {
-	private String payer;
-	private String payee;
+	private PaytubeUser payer;
+	private PaytubeUser payee;
 	private double amount;
 	private PaytubePaymentEvent paymentEvent;
+	private Long transactionId;
 
-	public PaytubePaymentEvent getPaymentEvent() {
-		return paymentEvent;
+	public Long getTransactionId() {
+		return transactionId;
 	}
 
-	public void setPaymentEvent(PaytubePaymentEvent paymentEvent) {
-		this.paymentEvent = paymentEvent;
+	public void setTransactionId(Long transactionId) {
+		this.transactionId = transactionId;
 	}
 
-	public String getPayer() {
+	public PaytubeUser getPayer() {
 		return payer;
 	}
 
-	public void setPayer(String payer) {
+	public void setPayer(PaytubeUser payer) {
 		this.payer = payer;
 	}
 
-	public String getPayee() {
+	public PaytubeUser getPayee() {
 		return payee;
 	}
 
-	public void setPayee(String payee) {
+	public void setPayee(PaytubeUser payee) {
 		this.payee = payee;
 	}
 
@@ -39,6 +39,14 @@ public class PaytubeTransaction implements IsSerializable {
 
 	public void setAmount(double amount) {
 		this.amount = amount;
+	}
+
+	public PaytubePaymentEvent getPaymentEvent() {
+		return paymentEvent;
+	}
+
+	public void setPaymentEvent(PaytubePaymentEvent paymentEvent) {
+		this.paymentEvent = paymentEvent;
 	}
 
 }
